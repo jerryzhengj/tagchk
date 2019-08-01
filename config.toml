@@ -1,0 +1,27 @@
+
+name = "RFID Reader"
+deviceNo = "g0000"
+version = "1.0.0"
+
+[connector]
+port = 115200
+name = "COM3"
+#name = "/dev/ttyAMA0"
+
+[listen]
+#BCM Code
+pin = [ 24, 12 ]
+file = "mgpio.bin"
+interval = 300
+
+
+[antenna]
+antennas = [ 0, 1 ,2, 3]
+power = 10
+stayDuration = 5
+
+[cache]
+expir = 300
+
+[lights]
+delayOff = 3
