@@ -94,8 +94,9 @@ func TestSelect6(test *testing.T) {
 	const shortForm = "20060102150405"
 	t := time.Now()
 	//temp := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), time.Local)
-	str := t.Format(shortForm)
-	fmt.Println(str)
+	DATE_LAYOUT := "2006-01-02 15:04:05"
+	//str := t.Format(DATE_LAYOUT)
+	fmt.Println(t.Format(DATE_LAYOUT))
 	a := "20190731"
 	b :=[]byte(a)
 
@@ -103,6 +104,8 @@ func TestSelect6(test *testing.T) {
 	binary.Write(bin_buf, binary.BigEndian, len(b)/2)
 
 	fmt.Printf("b=%v,len=%d\n",b,bin_buf.Bytes())
+
+	fmt.Printf("1<<8 = %d",1<<8)
 
 
 }

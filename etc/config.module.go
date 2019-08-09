@@ -8,8 +8,6 @@ type Configuration struct {
 	// 监听GPIO
 	Listen listen
 
-	// 上传
-	Upstream upstream
 	// 天线
 	Antenna antenna
 	// 串口
@@ -43,4 +41,5 @@ type listen struct {
 
 type light struct {
 	DelayOff int64
+	PuffOffAfter int64
 }

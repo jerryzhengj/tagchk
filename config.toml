@@ -25,3 +25,4 @@ expir = 300
 
 [lights]
 delayOff = 3
+puffOffAfter = 2

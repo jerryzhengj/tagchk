@@ -55,6 +55,7 @@ type WriteResult struct{
 	Freq byte  //高6位是第一次读取的频点参数，低2位是天线号
 	AntID byte //从Freq中解析出来的天线号
 	WriteCount byte
+	ResultType int //1:写标签结果  2：写完成结果
 }
 
 type Callback func(data InventoryInfo)

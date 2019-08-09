@@ -78,7 +78,7 @@ func updateRingStatus(status byte) {
 		log.LOGGER("App").Info(err)
 	}
 
-	//log.LOGGER("App").Info("Write light size:", len(lstatus))
+	log.LOGGER("App").Info("updateRingStatus:%v", lRingstatus)
 }
 
 
@@ -87,6 +87,8 @@ func RingOnDelayOff(){
 	if lRingstatus[0] == On {
 		return
 	}
+
+	time.Sleep(time.Duration(etc.Config.Lights.PuffOffAfter) * time.Second)
 
 	updateRingStatus(On)
 	go RingDelayOff(etc.Config.Lights.DelayOff)
@@ -153,5 +155,7 @@ func DelayNormal(delaySeconds int64){
 	log.LOGGER("App").Info("DelayNormal:from %v to %v", lLightstatus,lightState.Green)
 	updateLightStatus(lightState.Green)
 }
+
+
 
 

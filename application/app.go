@@ -33,33 +33,15 @@ func onData(invInfo reader.InventoryInfo) {
 	}
 
 	data := invInfo.TagInfo
-
-
-	epc := string(data.EPC[0:len(epc2write)])
-	//epc := hex.EncodeToString(data.EPC)
-	//_, epc :=util.ParseEPC(data.EPC)
-	//if len(epc) < 2{
-	//	return
-	//}
-	//epc := string(data.EPC)
-	////log.LOGGER("App").Info("report epc:%s,antId:%s",epc,fmt.Sprintf("%d", data.AntID))
-
+    length :=  len(epc2write)
+    if len(data.EPC) < len(epc2write) {
+		length = len(data.EPC)
+	}
+	epc := string(data.EPC[0:length])
 	antIDStr := fmt.Sprintf("%d", data.AntID)
 	epcOfRead = epc
 	go gpio.TurnOnYellowLight()
 	log.LOGGER("App").Info("found epc:%s",epc)
-	//if _, found := epcCache.Get(epc); found {
-	//
-	//	//_ = epcCache.Replace(epc, foundEpc(epc,antIDStr), time.Duration(etc.Config.Cache.Expir) * time.Second)
-	//	//log.LOGGER("App").Info("old epc:%s",epc)
-	//	//return
-	//} else {
-	//	log.LOGGER("App").Info("found new epc:%s",epc)
-	//	//go gpio.RingOnDelayOff()
-	//	//epcCache.Set(epc, foundEpc(epc,antIDStr), time.Duration(etc.Config.Cache.Expir) * time.Second)
-	//	//blink()
-	//
-	//}
 
 	//将发现的标签存入缓存，以便做过期处理
 	epcCache.Set(epc, foundEpc(epc,int(data.RSSI),antIDStr), time.Duration(etc.Config.Cache.Expir) * time.Second)
@@ -128,6 +110,8 @@ func doMonitor(fileName string){
 		if err := recover(); err != nil {
 			log.LOGGER("App").Error(err)
 			log.LOGGER("App").Info("Application run failed:%s",util.GetStack())
+			readerWorkStatus = 0
+			startChk = false
 		}
 	}()
 
@@ -143,26 +127,27 @@ func chkGPIOStatus(datas []byte){
 		return
 	}
 
-	if datas[util.PIN_1] == util.LOW{
+	if datas[util.PIN_1] == util.HIGH{
 		//log.LOGGER("App").Info("datas:%v",datas)
 		if readerWorkStatus == 0 {
 			//readerWorkStatus = 1
 			readerWorkStatus = 2
 			go gpio.TurnOnLightNormal()
 			epc2write = time.Now().Format(util.TIME_LAYOUT)
+			log.LOGGER("App").Info("read tag test with epc:%s",epc2write)
 			writeTotalNum = 0
 			writeSuccessNum = 0
 			startChk = true
 			repeatWrite()
 		}
 	}
-	if datas[util.PIN_2] == util.LOW{
+	if datas[util.PIN_2] == util.HIGH{
 		//log.LOGGER("App").Info("datas:%v",datas)
 		if readerWorkStatus == 2{
 			readerWorkStatus = 0
 			startChk = false
 			log.LOGGER("App").Info("start to report")
-			report()
+			//report()
 		}
 	}
 }
@@ -171,11 +156,14 @@ func chkGPIOStatus(datas []byte){
 func repeatWrite(){
 	if startChk {
 		writeEpc(epc2write)
+	}else{
+		report()
 	}
 }
 
 func report(){
 	lightRed := false
+	go traceReport(epc2write,writeTotalNum,writeSuccessNum)
 	if epcOfRead != epc2write {
 		lightRed = true
 	}
@@ -185,32 +173,39 @@ func report(){
 		lightRed = true
 	}
 
+	log.LOGGER("App").Info("total write times:%d, success times:%d",writeTotalNum,writeSuccessNum)
 	if lightRed{
-		go gpio.TurnOnRedLight()
+		log.LOGGER("App").Info("This tag is below standard!!!")
+		go gpio.RingOnDelayOff()
+	}else{
+		log.LOGGER("App").Info("This tag is qualified")
 	}
 
-	log.LOGGER("App").Info("total write times:%d, success times:%d",writeTotalNum,writeSuccessNum)
+
 
 }
 
 
 func inventory() {
-	epcOfRead = ""
 	//session.Inventory(onData)
 	session.FastInventory(onData)
 	//time.Sleep(time.Millisecond * 100)
 }
 
 func writeEpc(epc string){
-	writeTotalNum++
 	session.WriteEPC(epc,onWriteResult)
 }
 
 func onWriteResult(invInfo reader.WriteResult) {
 	log.LOGGER("App").Debug("write result:%v",invInfo)
-	if invInfo.ErrCode == reader.Success{
-		writeSuccessNum++
+
+	if invInfo.ResultType ==1{
+		writeTotalNum++
+		if invInfo.ErrCode == reader.Success{
+			writeSuccessNum++
+		}
+	}else if invInfo.ResultType == 2{
+		inventory()
 	}
-	inventory()
 }
 

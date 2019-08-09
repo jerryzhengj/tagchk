@@ -206,7 +206,7 @@ func handleWrite(session Reader) (res WriteResult) {
 	res = WriteResult{}
 	packetSize := session.readPacketHead()
 
-	//log.LOGGER("App").Debug("packet size: %d", packetSize)
+	log.LOGGER("App").Debug("packet size: %d", packetSize)
 
 	if packetSize == 0x04 {// 异常
 
@@ -220,6 +220,7 @@ func handleWrite(session Reader) (res WriteResult) {
 	log.LOGGER("App").Debug("handleWrite packetBody: %v", packetBody)
 	tagInfo := WriteResult{}
 
+	tagInfo.ResultType = 1
 	tagInfo.TagCount = packetBody[2:4]
 	tagInfo.DataLen = packetBody[4]
 	tagInfo.PC = packetBody[5:7]

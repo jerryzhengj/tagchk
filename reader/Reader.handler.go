@@ -3,9 +3,9 @@ package reader
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/jerryzhengj/tagchk/etc"
 	log "github.com/jeanphorn/log4go"
-	serial "github.com/tarm/goserial"
+	"github.com/jerryzhengj/tagchk/etc"
+	"github.com/tarm/goserial"
 )
 
 func Open(options *Options) (session Reader) {
@@ -99,8 +99,9 @@ func handleWriteResp(session Reader, callback WriteCallback) {
 	revNum := 0
 	defer func() {
 		if err := recover(); err != nil {
-			log.LOGGER("App").Error(err)
+			log.LOGGER("App").Error("handleWriteResp receive error:%s",err)
 			resultInfo  := WriteResult{}
+			resultInfo.ResultType = 2
 			resultInfo.ErrCode = 0x33
 			callback(resultInfo)
 		}
@@ -116,5 +117,10 @@ func handleWriteResp(session Reader, callback WriteCallback) {
 			finished = true
 		}
 	}
+
+	resultInfo := WriteResult{}
+	resultInfo.ResultType = 2
+	resultInfo.ErrCode = Success
+	callback(resultInfo)
 }
 
