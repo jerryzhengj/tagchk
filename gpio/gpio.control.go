@@ -23,11 +23,11 @@ type Light struct {
 }
 var lightState = Light{
 	Red: []byte{On, Off, Off},
-	Green: []byte{Off, On, Off},
-	Yellow: []byte{Off, Off, On},
+	Green: []byte{Off, Off, On},
+	Yellow: []byte{Off, On, Off},
 	On: []byte{On, On, On},
 	Off: []byte{Off, Off, Off},
-	Normal: []byte{Off, On, Off},
+	Normal: []byte{Off, Off, On},
 	BlinkOn: []byte{Off, On, On},
 	BlinkOff: []byte{Off, Off, On},
 }
@@ -61,7 +61,8 @@ func updateLightStatus(status []byte) {
 	//log.LOGGER("App").Info("Write light size:", len(lstatus))
 }
 
-func updateRingStatus(status byte) {
+//控制继电器触臂
+func updatePuffStatus(status byte) {
 	file, err := os.OpenFile("cgpio.bin", os.O_RDWR | os.O_CREATE, 0755)
 	if err != nil {
 		return
@@ -78,33 +79,33 @@ func updateRingStatus(status byte) {
 		log.LOGGER("App").Info(err)
 	}
 
-	log.LOGGER("App").Info("updateRingStatus:%v", lRingstatus)
+	log.LOGGER("App").Info("updatePuffStatus:%v", lRingstatus)
 }
 
-
-func RingOnDelayOff(){
-	log.LOGGER("App").Info("RingOnDelayOff:%v", lRingstatus)
+//继电器触臂
+func PuffOnDelayOff(){
+	log.LOGGER("App").Info("PuffOnDelayOff:%v", lRingstatus)
 	if lRingstatus[0] == On {
 		return
 	}
 
-	time.Sleep(time.Duration(etc.Config.Lights.PuffOffAfter) * time.Second)
+	time.Sleep(time.Duration(etc.Config.Lights.PuffOffAfter) * time.Millisecond)
 
-	updateRingStatus(On)
-	go RingDelayOff(etc.Config.Lights.DelayOff)
+	updatePuffStatus(On)
+	go PuffDelayOff(etc.Config.Lights.DelayOff)
 }
 
 
 
-func RingDelayOff(delaySeconds int64){
+func PuffDelayOff(delaySeconds int64){
 	//log.LOGGER("App").Info("RingDelayOff:delaySeconds=%d", delaySeconds)
 	time.Sleep(time.Duration(delaySeconds) * time.Second)
-	log.LOGGER("App").Info("RingDelayOff:%v", lRingstatus)
+	log.LOGGER("App").Info("PuffDelayOff:%v", lRingstatus)
 	if lRingstatus[0] == Off {
 		return
 	}
 
-	updateRingStatus(Off)
+	updatePuffStatus(Off)
 }
 
 func TurnOnLight(){
@@ -123,6 +124,7 @@ func TurnOffLight(){
 	updateLightStatus(lightState.Off)
 }
 
+//绿灯
 func TurnOnLightNormal(){
 	if bytes.Equal(lLightstatus,lightState.Normal) {
 		return
@@ -131,20 +133,24 @@ func TurnOnLightNormal(){
 	updateLightStatus(lightState.Normal)
 }
 
+//发现标签
 func TurnOnYellowLight(){
 	if bytes.Equal(lLightstatus,lightState.Yellow) {
 		return
 	}
 	log.LOGGER("App").Info("TurnOnYellowLight:from %v to %v", lLightstatus,lightState.Yellow)
 	updateLightStatus(lightState.Yellow)
+	go DelayNormal(1)
 }
 
+//红灯+响铃
 func TurnOnRedLight(){
 	if bytes.Equal(lLightstatus,lightState.Red) {
 		return
 	}
-	log.LOGGER("App").Info("TurnOnYellowLight:from %v to %v", lLightstatus,lightState.Red)
+	log.LOGGER("App").Info("TurnOnRedLight:from %v to %v", lLightstatus,lightState.Red)
 	updateLightStatus(lightState.Red)
+	go DelayNormal(1)
 }
 
 func DelayNormal(delaySeconds int64){

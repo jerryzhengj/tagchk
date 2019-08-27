@@ -25,4 +25,7 @@ expir = 300
 
 [lights]
 delayOff = 3
-puffOffAfter = 2
+puffOffAfter = 1500
+
+[chkRule]
+minSucNum = 4

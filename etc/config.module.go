@@ -15,6 +15,7 @@ type Configuration struct {
 
 	Cache cache
 	Lights light
+	ChkRule chkRule
 }
 
 type connector struct {
@@ -42,4 +43,8 @@ type listen struct {
 type light struct {
 	DelayOff int64
 	PuffOffAfter int64
+}
+
+type chkRule struct {
+	MinSucNum int
 }

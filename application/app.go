@@ -22,6 +22,8 @@ var startChk bool = false
 var isWritingAndReading = false
 var writeTotalNum = 0
 var writeSuccessNum = 0
+var startTime int64 = 0
+var endTime int64 = 0
 
 func onData(invInfo reader.InventoryInfo) {
 
@@ -111,6 +113,8 @@ func doMonitor(fileName string){
 			log.LOGGER("App").Error(err)
 			log.LOGGER("App").Info("Application run failed:%s",util.GetStack())
 			readerWorkStatus = 0
+			startTime = 0
+			endTime = 0
 			startChk = false
 		}
 	}()
@@ -137,6 +141,7 @@ func chkGPIOStatus(datas []byte){
 			log.LOGGER("App").Info("read tag test with epc:%s",epc2write)
 			writeTotalNum = 0
 			writeSuccessNum = 0
+			startTime = time.Now().UnixNano()
 			startChk = true
 			repeatWrite()
 		}
@@ -146,6 +151,7 @@ func chkGPIOStatus(datas []byte){
 		if readerWorkStatus == 2{
 			readerWorkStatus = 0
 			startChk = false
+			endTime = time.Now().UnixNano()
 			log.LOGGER("App").Info("start to report")
 			//report()
 		}
@@ -162,21 +168,30 @@ func repeatWrite(){
 }
 
 func report(){
-	lightRed := false
-	go traceReport(epc2write,writeTotalNum,writeSuccessNum)
-	if epcOfRead != epc2write {
-		lightRed = true
-	}
+	go traceReport(epc2write,writeTotalNum,writeSuccessNum,(endTime-startTime)/1000000)
+	//if epcOfRead != epc2write {
+	//	lightRed = true
+	//}
+	//if v, found := epcCache.Get(epcOfRead); found {
+	//	log.LOGGER("App").Info("report of %s:%v",epcOfRead,v)
+	//}else{
+	//	lightRed = true
+	//}
+
 	if v, found := epcCache.Get(epcOfRead); found {
 		log.LOGGER("App").Info("report of %s:%v",epcOfRead,v)
-	}else{
+	}
+
+	lightRed := false
+	if writeSuccessNum < etc.Config.ChkRule.MinSucNum {
 		lightRed = true
 	}
 
 	log.LOGGER("App").Info("total write times:%d, success times:%d",writeTotalNum,writeSuccessNum)
 	if lightRed{
 		log.LOGGER("App").Info("This tag is below standard!!!")
-		go gpio.RingOnDelayOff()
+		go gpio.TurnOnRedLight()
+		go gpio.PuffOnDelayOff()
 	}else{
 		log.LOGGER("App").Info("This tag is qualified")
 	}

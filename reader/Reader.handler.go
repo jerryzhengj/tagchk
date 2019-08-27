@@ -6,6 +6,7 @@ import (
 	log "github.com/jeanphorn/log4go"
 	"github.com/jerryzhengj/tagchk/etc"
 	"github.com/tarm/goserial"
+	"time"
 )
 
 func Open(options *Options) (session Reader) {
@@ -107,13 +108,15 @@ func handleWriteResp(session Reader, callback WriteCallback) {
 		}
 	}()
 	var tmp int16
+	var begin  = time.Now().Unix()
 	for !finished{
 		revNum++
 		resultInfo := handleWrite(session)
 		callback(resultInfo)
 
 		binary.Read(bytes.NewBuffer(resultInfo.TagCount), binary.BigEndian, &tmp)
-		if revNum == int(tmp){
+		current := time.Now().Unix()
+		if revNum == int(tmp) || current - begin >= 5 {
 			finished = true
 		}
 	}
